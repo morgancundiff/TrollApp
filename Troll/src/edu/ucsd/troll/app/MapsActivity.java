@@ -1,7 +1,9 @@
 package edu.ucsd.troll.app;
 
 import java.util.ArrayList;
+
 import org.w3c.dom.Document;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
@@ -17,7 +19,9 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.NavUtils;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
@@ -73,6 +77,8 @@ public class MapsActivity extends FragmentActivity implements
 	@Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //providing up navigation
+        getActionBar().setDisplayHomeAsUpEnabled(true);
         setContentView(R.layout.maps_layout);
 		setUpMapIfNeeded();
 
@@ -108,6 +114,25 @@ public class MapsActivity extends FragmentActivity implements
         
         mapDirections = new GMapDirection();
     }
+    
+    
+    /**
+     * All screens in your app that are not the main entrance 
+     * to your app (the "home" screen)should offer the user 
+     * a way to navigate to the logical parent screen in the 
+     * app's hierarchy by pressing the Up button in the action bar.  
+     */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        // Respond to the action bar's Up/Home button
+        case android.R.id.home:
+            NavUtils.navigateUpFromSameTask(this);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+    
     
     @SuppressLint("NewApi")
 	private void setUpMapIfNeeded() {

@@ -3,6 +3,8 @@ package edu.ucsd.troll.app;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.os.AsyncTask;
+import android.app.ActionBar;
+import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.text.Html;
@@ -96,6 +98,7 @@ public class ProfileActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getActionBar().setDisplayHomeAsUpEnabled(true);
 
         //login manager
         login = new LoginManager(getApplicationContext());
@@ -112,6 +115,7 @@ public class ProfileActivity extends Activity {
             setContentView(R.layout.profile_layout);
             //this is just for testing and debugging
             //login.logoutUser();
+         
             
             final Button logoutButton = (Button) findViewById(R.id.logoutBtn);
 
@@ -179,6 +183,17 @@ public class ProfileActivity extends Activity {
 
     }
 
+    
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        // Respond to the action bar's Up/Home button
+        case android.R.id.home:
+            NavUtils.navigateUpFromSameTask(this);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
 
 
