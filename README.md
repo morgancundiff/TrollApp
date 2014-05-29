@@ -1,4 +1,0 @@
-TrollApp
-========
-
-Android Application
