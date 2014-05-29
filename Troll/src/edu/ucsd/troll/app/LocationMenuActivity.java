@@ -41,7 +41,7 @@ public class LocationMenuActivity extends ListActivity {
     private static String url = "http://troll.everythingcoed.com/get/menu/1/sort/rating?api_key=OlDwjUX0fQSm0vAy2D3fy4uCZ108bx5N";
 
     // JSON Node names
-    private static final String TAG_CONTACTS = "menu";
+    private static final String TAG_MENU = "menu";
     private static final String TAG_ID = "id";
     private static final String TAG_TITLE = "title";
     private static final String TAG_DESCRIPTION = "description";
@@ -74,34 +74,34 @@ public class LocationMenuActivity extends ListActivity {
             public void onItemClick(AdapterView<?> parent, View view,
                                     int position, long id) {
                 // getting values from selected ListItem
-                String name = ((TextView) view.findViewById(R.id.title))
+                String title = ((TextView) view.findViewById(R.id.title))
                         .getText().toString();
-                String cost = ((TextView) view.findViewById(R.id.rating))
+                String rating = ((TextView) view.findViewById(R.id.rating))
                         .getText().toString();
-                String description = ((TextView) view.findViewById(R.id.category))
+                String category = ((TextView) view.findViewById(R.id.category))
                         .getText().toString();
 
                 // Starting single contact activity
                 Intent in = new Intent(getApplicationContext(),
                         SingleMenuItemActivity.class);
-                in.putExtra(TAG_TITLE, name);
-                in.putExtra(TAG_DESCRIPTION, cost);
-                in.putExtra(TAG_SIZE, description);
+                in.putExtra(TAG_TITLE, title);
+                in.putExtra(TAG_RATING, rating);
+                in.putExtra(TAG_SIZE, category);
                 startActivity(in);
 
             }
         });
 
         // Calling async task to get json
-        new GetContacts().execute();
+        new GetMenu().execute();
     }
 
     /**
      * Async task class to get json by making HTTP call
      * */
-    private class GetContacts extends AsyncTask<Void, Void, Void> {
+    private class GetMenu extends AsyncTask<Void, Void, Void> {
 
-        HashMap<String, String> contact = new HashMap<String, String>();
+        HashMap<String, String> singleMenu = new HashMap<String, String>();
 
         @Override
         protected void onPreExecute() {
@@ -131,7 +131,7 @@ public class LocationMenuActivity extends ListActivity {
                     Log.d("Response: ", "=> " + jsonObj);
 
                     // Getting JSON Array node
-                    menu = jsonObj.getJSONArray(TAG_CONTACTS);
+                    menu = jsonObj.getJSONArray(TAG_MENU);
 
                     // looping through All Contacts
                     for (int i = 0; i < menu.length(); i++) {
@@ -163,8 +163,8 @@ public class LocationMenuActivity extends ListActivity {
                         // adding each child node to HashMap key => value
                         //contact.put(TAG_ID, id);
                         contact.put(TAG_TITLE, title);
-                        contact.put(TAG_DESCRIPTION, category);
-                        contact.put(TAG_SIZE, rating);
+                        contact.put(TAG_CATEGORY, category);
+                        contact.put(TAG_RATING, rating);
 
                         // adding contact to contact list
                         menuList.add(contact);
@@ -190,9 +190,9 @@ public class LocationMenuActivity extends ListActivity {
              * */
             ListAdapter adapter = new SimpleAdapter(
                     LocationMenuActivity.this, menuList,
-                    R.layout.location_menu_list, new String[] {TAG_TITLE, TAG_DESCRIPTION,
-                    TAG_SIZE}, new int[] { R.id.title,
-                    R.id.rating, R.id.category });
+                    R.layout.location_menu_list, new String[] {TAG_TITLE, TAG_CATEGORY,
+                    TAG_RATING}, new int[] { R.id.title,
+                    R.id.category, R.id.rating });
 
             setListAdapter(adapter);
         }

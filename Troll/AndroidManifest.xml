@@ -47,19 +47,19 @@
         </activity>
 
         <activity
-            android:name="edu.ucsd.troll.app..MenuActivity"
+            android:name="edu.ucsd.troll.app.MenuActivity"
             android:label="@string/app_name"
             android:parentActivityName="edu.ucsd.troll.app.MainActivity">
         </activity>
 
         <activity
-            android:name="edu.ucsd.troll.app..LocationMenuActivity"
+            android:name="edu.ucsd.troll.app.LocationMenuActivity"
             android:label="@string/app_name"
             android:parentActivityName="edu.ucsd.troll.app.MainActivity">
         </activity>
 
         <activity
-            android:name="edu.ucsd.troll.app..SingleMenuItemActivity"
+            android:name="edu.ucsd.troll.app.SingleMenuItemActivity"
             android:label="@string/app_name">
         </activity>
 
@@ -78,6 +78,9 @@
             android:name="edu.ucsd.troll.app.ProfileActivity"
             android:label="@string/app_name"
             android:parentActivityName="edu.ucsd.troll.app.MainActivity">
+            <!-- To support below API Level 14 -->
+    <meta-data android:name="android.support.UI_OPTIONS"
+           android:value="splitActionBarWhenNarrow" />
         </activity>
         
         
