@@ -2,3 +2,13 @@
 1401343733632	Rename field 'TAG_CONTACTS'
 1401343757743	Rename field 'contact'
 1401343782967	Rename type 'GetContacts'
+1401387534629	Rename resource 'profile_layout.xml'
+1401387815845	Rename resource 'profile_layout_logged_out.xml'
+1401387833981	Rename resource 'profile_layout_logged_in.xml'
+1401388366921	Rename resource 'profile_logged_in.xml'
+1401388647801	Rename resource 'profile_logged_out.xml'
+1401388701506	Delete element
+1401389342672	Delete element
+1401389488500	Delete element
+1401391528436	Rename type 'LoginInUser'
+1401391537485	Rename type 'createUser'

@@ -53,6 +53,8 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 
+import edu.ucsd.troll.app.R;
+
 /**
  * Created by shalomabitan on 5/22/14.
  */
@@ -98,17 +100,41 @@ public class ProfileActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
         getActionBar().setDisplayHomeAsUpEnabled(true);
 
         //login manager
         login = new LoginManager(getApplicationContext());
         
         if(!login.isLoggedIn()){
+        	
+            setContentView(R.layout.profile_logged_out);
 
+            
+            final Button switchToSignIn = (Button) findViewById(R.id.signInBtn);
+            final Button switchToSignUp = (Button) findViewById(R.id.signUpBtn);
 
-            Intent i = new Intent(getApplicationContext(), LoginActivity.class);
-            startActivity(i);
-            finish();
+            switchToSignIn.setOnClickListener(new View.OnClickListener() {
+                @Override
+
+            public void onClick(View view) {
+                	Intent i = new Intent(getApplicationContext(), LoginActivity.class);
+                    startActivity(i);
+                    finish();
+                }
+            });
+            
+            switchToSignUp.setOnClickListener(new View.OnClickListener() {
+                @Override
+
+            public void onClick(View view) {
+                	Intent i = new Intent(getApplicationContext(), SignUpActivity.class);
+                    startActivity(i);
+                    finish();
+                }
+            });
+            
+         
 
 
         }else{

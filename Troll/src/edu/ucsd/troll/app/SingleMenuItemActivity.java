@@ -5,8 +5,10 @@ package edu.ucsd.troll.app;
  */
 
 import android.os.Bundle;
+import android.support.v4.app.NavUtils;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.os.Bundle;
 import android.app.Activity;
@@ -18,6 +20,7 @@ import android.widget.RatingBar;
 import android.widget.RatingBar.OnRatingBarChangeListener;
 import android.widget.TextView;
 import android.widget.Toast;
+
 /**
  * This activity will be the single menu item's display
  * page. it will recieve data from the calling activity.
@@ -27,6 +30,17 @@ import android.widget.Toast;
 public class SingleMenuItemActivity extends Activity{
 	
 	
+    private static final String TAG_MENU = "menu";
+    private static final String TAG_ID = "id";
+    private static final String TAG_TITLE = "title";
+    private static final String TAG_DESCRIPTION = "description";
+    private static final String TAG_CATEGORY = "category";
+    private static final String TAG_RATING = "rating";
+    private static final String TAG_VOTES = "total_votes";
+    private static final String TAG_SIZES = "sizes";
+    private static final String TAG_SIZE = "size";
+    private static final String TAG_PRICE = "price";
+    
 	  private RatingBar ratingBar;
 	  private TextView txtRatingValue;
 	  private Button btnSubmit;
@@ -36,17 +50,26 @@ public class SingleMenuItemActivity extends Activity{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.menu_single_item);
 		
+		TextView itemTitle = (TextView)findViewById(R.id.lblTitle);  
+		itemTitle.setText(getIntent().getStringExtra(TAG_TITLE));
+		
+		TextView itemDescription = (TextView)findViewById(R.id.lblTitle);  
+		itemDescription.setText(getIntent().getStringExtra(TAG_DESCRIPTION));
+		
+		TextView itemCategory = (TextView)findViewById(R.id.lblTitle);  
+		itemCategory.setText(getIntent().getStringExtra(TAG_CATEGORY));
+		
+		
 		addListenerOnRatingBar();
 		addListenerOnButton();
 	 
 	  }
 	 
+	 
 	  public void addListenerOnRatingBar() {
 		  
-		  String ratingValue = getIntent().getStringExtra("rating");
-			
-		  Log.d("the value of rating is: " , ratingValue);
-	 
+		String ratingValue = getIntent().getStringExtra("rating");
+
 		ratingBar = (RatingBar) findViewById(R.id.ratingBar);
 		ratingBar.setRating(Float.parseFloat(ratingValue));
 		txtRatingValue = (TextView) findViewById(R.id.txtRatingValue);
@@ -83,6 +106,7 @@ public class SingleMenuItemActivity extends Activity{
 		});
 	 
 	  }
+	  
 	  
 	  
 	  

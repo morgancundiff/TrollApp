@@ -4,12 +4,16 @@ package edu.ucsd.troll.app;
  * Created by shalomabitan on 5/28/14.
  */
 
+import android.app.ActionBar;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -19,12 +23,15 @@ import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
 
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 
 /**
@@ -38,30 +45,40 @@ public class LocationMenuActivity extends ListActivity {
     private ProgressDialog pDialog;
 
     // URL to get menu JSON
-    private static String url = "http://troll.everythingcoed.com/get/menu/1/sort/rating?api_key=OlDwjUX0fQSm0vAy2D3fy4uCZ108bx5N";
+    private static String urlSimple = "http://troll.everythingcoed.com/get/menu/1";
+    private static String urlRating = "http://troll.everythingcoed.com/get/menu/1/sort/rating";
+    private static String urlPriceAsc = "http://troll.everythingcoed.com/get/menu/1/sort/price/asc";
+    private static String urlPriceDesc = "http://troll.everythingcoed.com/get/menu/1/sort/price/desc";
 
     // JSON Node names
+    private static final String TAG_APIKEYVALUE = "OlDwjUX0fQSm0vAy2D3fy4uCZ108bx5N";
+    private static final String TAG_APIKEYNAME= "api_key";
     private static final String TAG_MENU = "menu";
     private static final String TAG_ID = "id";
     private static final String TAG_TITLE = "title";
     private static final String TAG_DESCRIPTION = "description";
     private static final String TAG_CATEGORY = "category";
     private static final String TAG_RATING = "rating";
+    private static final String TAG_VOTES = "total_votes";
     private static final String TAG_SIZES = "sizes";
     private static final String TAG_SIZE = "size";
     private static final String TAG_PRICE = "price";
-    //private static final String TAG_PHONE_OFFICE = "office";
 
+    
     // menu JSONArray
     JSONArray menu = null;
 
     // Hashmap for ListView
     ArrayList<HashMap<String, String>> menuList;
+    
+    List<NameValuePair> params = new ArrayList<NameValuePair>();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.location_menu_layout);
+                
+        params.add(new BasicNameValuePair(TAG_APIKEYNAME, TAG_APIKEYVALUE));
 
         menuList = new ArrayList<HashMap<String, String>>();
 
@@ -96,6 +113,40 @@ public class LocationMenuActivity extends ListActivity {
         new GetMenu().execute();
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu items for use in the action bar
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.single_menu_actions, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+	  
+//	  @Override
+//	    public boolean onOptionsItemSelected(MenuItem item) {
+//	        // Take appropriate action for each action item click
+//	        switch (item.getItemId()) {
+//	        case R.id.action_search:
+//	            // search action
+//	            return true;
+//	        case R.id.action_location_found:
+//	            // location found
+//	            LocationFound();
+//	            return true;
+//	        case R.id.action_refresh:
+//	            // refresh
+//	            return true;
+//	        case R.id.action_help:
+//	            // help action
+//	            return true;
+//	        case R.id.action_check_updates:
+//	            // check for updates action
+//	            return true;
+//	        default:
+//	            return super.onOptionsItemSelected(item);
+//	        }
+//	    }
+	  
     /**
      * Async task class to get json by making HTTP call
      * */
@@ -120,7 +171,7 @@ public class LocationMenuActivity extends ListActivity {
             APIServiceHandler sh = new APIServiceHandler();
 
             // Making a request to url and getting response
-            String jsonStr = sh.makeServiceCall(url, APIServiceHandler.GET);
+            String jsonStr = sh.makeServiceCall(urlSimple, APIServiceHandler.GET, params);
 
             Log.d("Response: ", "> " + jsonStr);
 

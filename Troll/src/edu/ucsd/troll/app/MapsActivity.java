@@ -1,12 +1,19 @@
 package edu.ucsd.troll.app;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.w3c.dom.Document;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
@@ -16,6 +23,7 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
@@ -23,6 +31,8 @@ import android.support.v4.app.NavUtils;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ListAdapter;
+import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -39,12 +49,53 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.List;
+import java.util.ArrayList;
+import org.apache.http.NameValuePair;
+import java.util.HashMap;
+import org.apache.http.message.BasicNameValuePair;
+
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.List;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
+
+
 public class MapsActivity extends FragmentActivity implements
         GooglePlayServicesClient.ConnectionCallbacks,
         GooglePlayServicesClient.OnConnectionFailedListener,
         com.google.android.gms.location.LocationListener,
         LocationListener {
 
+    private static String locationUrl = "http://troll.everythingcoed.com/get/locations";
+
+    private static final String TAG_APIKEYVALUE = "OlDwjUX0fQSm0vAy2D3fy4uCZ108bx5N";
+    private static final String TAG_APIKEYNAME= "api_key";
+    private static final String TAG_RESPONSE = "response";
+    private static final String TAG_RESULT = "result";
+    
+    // Hashmap for ListView
+    ArrayList<HashMap<String, String>> locationList;
+    
+    //paramete list for api calls
+    List<NameValuePair> params = new ArrayList<NameValuePair>();
+    
 	private GoogleMap map;	
 	int currentMapZoom;
 
@@ -79,7 +130,13 @@ public class MapsActivity extends FragmentActivity implements
         super.onCreate(savedInstanceState);
         //providing up navigation
         getActionBar().setDisplayHomeAsUpEnabled(true);
+        
+        //add the api key for the call
+        params.add(new BasicNameValuePair(TAG_APIKEYNAME, TAG_APIKEYVALUE));
+        
         setContentView(R.layout.maps_layout);
+        
+        new GetLocations().execute();
 		setUpMapIfNeeded();
 
         // Create a new global location parameters object
@@ -589,5 +646,103 @@ public class MapsActivity extends FragmentActivity implements
 		// TODO Auto-generated method stub
 		
 	}
+	
+    /**
+     * Async task class to get json by making HTTP call
+     * */
+    private class GetLocations extends AsyncTask<Void, Void, Void> {
+
+        HashMap<String, String> Locations = new HashMap<String, String>();
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Void doInBackground(Void... arg0) {
+            // Creating service handler class instance
+            APIServiceHandler sh = new APIServiceHandler();
+
+            // Making a request to url and getting response
+            String jsonStr = sh.makeServiceCall(locationUrl, APIServiceHandler.GET, params);
+
+            Log.d("Response: ", "> " + jsonStr);
+
+            if (jsonStr != null) {
+                try {
+                	
+                    JSONArray jsonObj = new JSONArray(jsonStr);
+
+                   Log.d("Response: ", "=> " + jsonObj);
+//
+//                    // Getting JSON Array node
+//                    menu = jsonObj.getJSONArray(TAG_MENU);
+//
+//                    // looping through All Contacts
+//                    for (int i = 0; i < menu.length(); i++) {
+//                        JSONObject c = menu.getJSONObject(i);
+//
+//                        String id = c.getString(TAG_ID);
+//                        Log.d("ID: ", "=> " + id);
+//                        String title = c.getString(TAG_TITLE);
+//                        Log.d("TITLE: ", "=> " + title);
+//                        String email = c.getString(TAG_DESCRIPTION);
+//                        Log.d("DESCRIPTION: ", "=> " + email);
+//                        String category = c.getString(TAG_CATEGORY);
+//                        Log.d("CATEGORY: ", "=> " + category);
+//                        String rating = c.getString(TAG_RATING);
+//                        Log.d("RATING: ", "=> " + rating);
+//
+//                        // Phone node is JSON Object
+//                        //JSONArray sizes = c.getJSONArray(TAG_SIZES);
+//                        // Log.d("SIZES: ", "=> " + sizes);
+//                        //String size = sizes.getString(TAG_SIZE);
+//                        // Log.d("SIZE: ", "=> " + size);
+//                        //String price = sizes.getString(TAG_PRICE);
+//                        //Log.d("PRICE: ", "=> " + price);
+//                        //String office = phone.getString(TAG_PHONE_OFFICE);
+//
+//                        // tmp hashmap for single contact
+//                        HashMap<String, String> contact = new HashMap<String, String>();
+//
+//                        // adding each child node to HashMap key => value
+//                        //contact.put(TAG_ID, id);
+//                        contact.put(TAG_TITLE, title);
+//                        contact.put(TAG_CATEGORY, category);
+//                        contact.put(TAG_RATING, rating);
+//
+//                        // adding contact to contact list
+//                        menuList.add(contact);
+//                   }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                Log.e("ServiceHandler", "Couldn't get any data from the url");
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            super.onPostExecute(result);
+
+            /**
+             * Updating parsed JSON data into ListView
+             * */
+//            ListAdapter adapter = new SimpleAdapter(
+//                    LocationMenuActivity.this, menuList,
+//                    R.layout.location_menu_list, new String[] {TAG_TITLE, TAG_CATEGORY,
+//                    TAG_RATING}, new int[] { R.id.title,
+//                    R.id.category, R.id.rating });
+//
+//            setListAdapter(adapter);
+        }
+
+    }
+
+    
 }
 
