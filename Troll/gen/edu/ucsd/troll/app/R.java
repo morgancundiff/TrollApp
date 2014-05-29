@@ -1380,7 +1380,7 @@ containing a value of this type.
         public static final int action_menu_divider=0x7f070028;
         public static final int action_menu_presenter=0x7f070029;
         public static final int action_mode_close_button=0x7f070036;
-        public static final int action_settings=0x7f070060;
+        public static final int action_settings=0x7f070061;
         public static final int activity_chooser_view_content=0x7f070037;
         public static final int always=0x7f07001e;
         public static final int beginning=0x7f070023;
@@ -1401,8 +1401,8 @@ containing a value of this type.
         public static final int expand_activities_button=0x7f070038;
         public static final int expanded_menu=0x7f07003e;
         public static final int factText=0x7f07004e;
-        public static final int favorite_list=0x7f07005f;
-        public static final int favorites_title=0x7f07005e;
+        public static final int favorite_list=0x7f070060;
+        public static final int favorites_title=0x7f07005f;
         public static final int grayscale=0x7f070012;
         public static final int holo_dark=0x7f070005;
         public static final int holo_light=0x7f070006;
@@ -1416,6 +1416,7 @@ containing a value of this type.
         public static final int listMode=0x7f070014;
         public static final int list_item=0x7f07003b;
         public static final int loginBtn=0x7f070058;
+        public static final int logoutBtn=0x7f07005a;
         public static final int map=0x7f070059;
         public static final int mapsBtn=0x7f07004f;
         public static final int match_parent=0x7f07000c;
@@ -1458,10 +1459,10 @@ containing a value of this type.
         public static final int top_action_bar=0x7f070032;
         public static final int up=0x7f070033;
         public static final int useLogo=0x7f070016;
-        public static final int user_email=0x7f07005b;
-        public static final int user_first_name=0x7f07005c;
-        public static final int user_last_name=0x7f07005d;
-        public static final int user_username=0x7f07005a;
+        public static final int user_email=0x7f07005c;
+        public static final int user_first_name=0x7f07005d;
+        public static final int user_last_name=0x7f07005e;
+        public static final int user_username=0x7f07005b;
         public static final int withText=0x7f07001f;
         public static final int wrap_content=0x7f07000d;
     }

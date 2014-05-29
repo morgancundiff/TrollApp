@@ -29,10 +29,12 @@ import org.json.JSONObject;
 
 import java.util.List;
 import java.util.ArrayList;
-import org.apache.http.NameValuePair;
-import java.util.HashMap;
-import org.apache.http.message.BasicNameValuePair;
 
+import org.apache.http.NameValuePair;
+
+import java.util.HashMap;
+
+import org.apache.http.message.BasicNameValuePair;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -85,7 +87,7 @@ public class ProfileActivity extends Activity {
 
     LoginManager login;
     //login button
-    Button loginButton;
+    //Button logoutButton;
 
     //Edittext
     EditText usernameTextBox, passwordTextBox;
@@ -97,7 +99,7 @@ public class ProfileActivity extends Activity {
 
         //login manager
         login = new LoginManager(getApplicationContext());
-
+        
         if(!login.isLoggedIn()){
 
 
@@ -110,6 +112,19 @@ public class ProfileActivity extends Activity {
             setContentView(R.layout.profile_layout);
             //this is just for testing and debugging
             //login.logoutUser();
+            
+            final Button logoutButton = (Button) findViewById(R.id.logoutBtn);
+
+            logoutButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+
+            public void onClick(View view) {
+                	login.logoutUser();
+                    Intent act2 = new Intent(view.getContext(), MainActivity.class);
+                    Toast.makeText(ProfileActivity.this, "You Have Been Logged out", Toast.LENGTH_LONG).show();
+                    startActivity(act2);
+                }
+            });
 
             TextView usernameTextView = (TextView) findViewById(R.id.user_username);
 
