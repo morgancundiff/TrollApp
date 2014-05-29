@@ -1,13 +1,16 @@
 package edu.ucsd.troll.app;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
-import org.apache.http.NameValuePair;
-import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.List;
+import java.util.ArrayList;
+import org.apache.http.NameValuePair;
+import java.util.HashMap;
+import org.apache.http.message.BasicNameValuePair;
+
 import org.w3c.dom.Document;
 
 import android.annotation.SuppressLint;
@@ -49,17 +52,18 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.List;
 import java.util.ArrayList;
-import org.apache.http.NameValuePair;
-import java.util.HashMap;
-import org.apache.http.message.BasicNameValuePair;
 
+import org.apache.http.NameValuePair;
+
+import java.util.HashMap;
+
+import org.apache.http.message.BasicNameValuePair;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -89,7 +93,17 @@ public class MapsActivity extends FragmentActivity implements
     private static final String TAG_APIKEYNAME= "api_key";
     private static final String TAG_RESPONSE = "response";
     private static final String TAG_RESULT = "result";
+    private static final String TAG_LOCATIONS = "locations";
+    private static final String TAG_ID = "id";
+    private static final String TAG_LAT = "lat";
+    private static final String TAG_LNG = "lng";
+    private static final String TAG_TITLE = "location_name";
+    private static final String TAG_ADDRESS = "address";
+    private static final String TAG_LASTNAME = "last_name";
+    private static final String TAG_FAVORITES = "favorites";
+    private static final String TAG_USERTOKEN = "presist_code";
     
+    JSONArray locations = null;
     // Hashmap for ListView
     ArrayList<HashMap<String, String>> locationList;
     
@@ -133,6 +147,8 @@ public class MapsActivity extends FragmentActivity implements
         
         //add the api key for the call
         params.add(new BasicNameValuePair(TAG_APIKEYNAME, TAG_APIKEYVALUE));
+        
+        locationList = new ArrayList<HashMap<String, String>>();
         
         setContentView(R.layout.maps_layout);
         
@@ -211,28 +227,36 @@ public class MapsActivity extends FragmentActivity implements
 	        //QUERY THE DATABASE FOR OPEN OR CLOSED CARTS
 			
 	        currentMapZoom = 15;
+	        
+	        for (HashMap<String, String> hashMap : locationList) {
+	        	
+	            map.addMarker(new MarkerOptions()
+	                .position(new LatLng(Double.parseDouble(hashMap.get(TAG_LAT)) ,        
+	                    Double.parseDouble(hashMap.get(TAG_LNG))))
+	                .title("Another marker"));
+	        }
 
-	        //CREATE THE MARKERS WITH THE APPROPRIATE IMAGES
-			LatLng ucsdLatLng = new LatLng(32.881271, -117.2389000);//879271,2289000
-			//LatLng 
-			warrenLatLng = new LatLng(32.880966, -117.234450);
-			LatLng centerLatLng = new LatLng(32.878053, -117.237218);
-			LatLng socialScienceLatLng = new LatLng(32.883822, -117.240748);
-			LatLng SOMLatLng = new LatLng(32.875852, -117.237578);
-			LatLng revellePlazaLatLng = new LatLng(32.874851, -117.241217);
-			Marker ucsd = map.addMarker(new MarkerOptions().position(ucsdLatLng)
-					.visible(false).title("UCSD"));
-			Marker warrenMarker = map.addMarker(new MarkerOptions().position(warrenLatLng)
-			        .title("Warren").snippet("Welcome to warren coffee cart"));
-			Marker centerHallMarker = map.addMarker(new MarkerOptions().position(centerLatLng)
-			        .title("Center"));
-			Marker socialScienceMarker = map.addMarker(new MarkerOptions().position(socialScienceLatLng)
-			        .title("Social Sceinces"));
-			Marker SOMMarker = map.addMarker(new MarkerOptions().position(SOMLatLng)
-			        .title("SOM"));
-			Marker revellePlazaMarker = map.addMarker(new MarkerOptions().position(revellePlazaLatLng)
-			        .title("Revelle Plaza"));
-			map.moveCamera(CameraUpdateFactory.newLatLngZoom(ucsdLatLng, currentMapZoom));
+//	        //CREATE THE MARKERS WITH THE APPROPRIATE IMAGES
+//			LatLng ucsdLatLng = new LatLng(32.881271, -117.2389000);//879271,2289000
+//			//LatLng 
+//			warrenLatLng = new LatLng(32.880966, -117.234450);
+//			LatLng centerLatLng = new LatLng(32.878053, -117.237218);
+//			LatLng socialScienceLatLng = new LatLng(32.883822, -117.240748);
+//			LatLng SOMLatLng = new LatLng(32.875852, -117.237578);
+//			LatLng revellePlazaLatLng = new LatLng(32.874851, -117.241217);
+//			Marker ucsd = map.addMarker(new MarkerOptions().position(ucsdLatLng)
+//					.visible(false).title("UCSD"));
+//			Marker warrenMarker = map.addMarker(new MarkerOptions().position(warrenLatLng)
+//			        .title("Warren").snippet("Welcome to warren coffee cart"));
+//			Marker centerHallMarker = map.addMarker(new MarkerOptions().position(centerLatLng)
+//			        .title("Center"));
+//			Marker socialScienceMarker = map.addMarker(new MarkerOptions().position(socialScienceLatLng)
+//			        .title("Social Sceinces"));
+//			Marker SOMMarker = map.addMarker(new MarkerOptions().position(SOMLatLng)
+//			        .title("SOM"));
+//			Marker revellePlazaMarker = map.addMarker(new MarkerOptions().position(revellePlazaLatLng)
+//			        .title("Revelle Plaza"));
+//			map.moveCamera(CameraUpdateFactory.newLatLngZoom(ucsdLatLng, currentMapZoom));
 
 	        //ADD THE MARKERS TO THE ARRAY LIST
 //			mapLocMarker UCSD = new mapLocMarker("UCSD", new LatLng(32.881271, -117.2389000), ucsd);
@@ -650,95 +674,97 @@ public class MapsActivity extends FragmentActivity implements
     /**
      * Async task class to get json by making HTTP call
      * */
-    private class GetLocations extends AsyncTask<Void, Void, Void> {
+    private class GetLocations extends AsyncTask<Void, Void, String> {
 
         HashMap<String, String> Locations = new HashMap<String, String>();
 
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
+//        @Override
+//        protected void onPreExecute() {
+//            super.onPreExecute();
+//        }
 
         @Override
-        protected Void doInBackground(Void... arg0) {
+        protected String doInBackground(Void... arg0) {
             // Creating service handler class instance
             APIServiceHandler sh = new APIServiceHandler();
-
+ 
             // Making a request to url and getting response
             String jsonStr = sh.makeServiceCall(locationUrl, APIServiceHandler.GET, params);
-
-            Log.d("Response: ", "> " + jsonStr);
-
+ 
+            
+ 
             if (jsonStr != null) {
-                try {
-                	
-                    JSONArray jsonObj = new JSONArray(jsonStr);
-
-                   Log.d("Response: ", "=> " + jsonObj);
-//
-//                    // Getting JSON Array node
-//                    menu = jsonObj.getJSONArray(TAG_MENU);
-//
-//                    // looping through All Contacts
-//                    for (int i = 0; i < menu.length(); i++) {
-//                        JSONObject c = menu.getJSONObject(i);
-//
-//                        String id = c.getString(TAG_ID);
-//                        Log.d("ID: ", "=> " + id);
-//                        String title = c.getString(TAG_TITLE);
-//                        Log.d("TITLE: ", "=> " + title);
-//                        String email = c.getString(TAG_DESCRIPTION);
-//                        Log.d("DESCRIPTION: ", "=> " + email);
-//                        String category = c.getString(TAG_CATEGORY);
-//                        Log.d("CATEGORY: ", "=> " + category);
-//                        String rating = c.getString(TAG_RATING);
-//                        Log.d("RATING: ", "=> " + rating);
-//
-//                        // Phone node is JSON Object
-//                        //JSONArray sizes = c.getJSONArray(TAG_SIZES);
-//                        // Log.d("SIZES: ", "=> " + sizes);
-//                        //String size = sizes.getString(TAG_SIZE);
-//                        // Log.d("SIZE: ", "=> " + size);
-//                        //String price = sizes.getString(TAG_PRICE);
-//                        //Log.d("PRICE: ", "=> " + price);
-//                        //String office = phone.getString(TAG_PHONE_OFFICE);
-//
-//                        // tmp hashmap for single contact
-//                        HashMap<String, String> contact = new HashMap<String, String>();
-//
-//                        // adding each child node to HashMap key => value
-//                        //contact.put(TAG_ID, id);
-//                        contact.put(TAG_TITLE, title);
-//                        contact.put(TAG_CATEGORY, category);
-//                        contact.put(TAG_RATING, rating);
-//
-//                        // adding contact to contact list
-//                        menuList.add(contact);
-//                   }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+               return jsonStr;
             } else {
                 Log.e("ServiceHandler", "Couldn't get any data from the url");
             }
-
+ 
             return null;
         }
 
         @Override
-        protected void onPostExecute(Void result) {
+        protected void onPostExecute(String result) {
             super.onPostExecute(result);
 
-            /**
-             * Updating parsed JSON data into ListView
-             * */
-//            ListAdapter adapter = new SimpleAdapter(
-//                    LocationMenuActivity.this, menuList,
-//                    R.layout.location_menu_list, new String[] {TAG_TITLE, TAG_CATEGORY,
-//                    TAG_RATING}, new int[] { R.id.title,
-//                    R.id.category, R.id.rating });
-//
-//            setListAdapter(adapter);
+            Log.d("RESULT: ", "=> " + result);
+            
+            try {
+                JSONObject jsonObj = new JSONObject(result);
+                 
+                // Getting JSON Array node
+                locations = jsonObj.getJSONArray(TAG_LOCATIONS);
+
+                // looping through All Contacts
+                for (int i = 0; i < locations.length(); i++) {
+                    JSONObject c = locations.getJSONObject(i);
+                    
+                    Log.d("individual location: ", "=> " + c);
+                     
+                    String id = c.getString(TAG_ID);
+                    Log.d("id: ", "=> " + id);
+                    String lat = c.getString(TAG_LAT);
+                    Log.d("lat: ", "=> " + lat);
+                    String lng = c.getString(TAG_LNG);
+                    Log.d("lng: ", "=> " + lng);
+                    String address = c.getString(TAG_ADDRESS);
+                    Log.d("address: ", "=> " + address);
+                    String title = c.getString(TAG_TITLE);
+                    Log.d("title: ", "=> " + title);
+
+//                    // Phone node is JSON Object
+//                    JSONObject phone = c.getJSONObject(TAG_PHONE);
+//                    String mobile = phone.getString(TAG_PHONE_MOBILE);
+//                    String home = phone.getString(TAG_PHONE_HOME);
+//                    String office = phone.getString(TAG_PHONE_OFFICE);
+
+                    // tmp hashmap for single contact
+                    HashMap<String, String> locationHash = new HashMap<String, String>();
+                    
+                    Log.d("hash map: ", "=> " + "become active");
+
+                    // adding each child node to HashMap key => value
+                    locationHash.put(TAG_ID, id);
+                    Log.d("hash map: ", "=> " + "put id");
+                    
+                    locationHash.put(TAG_LAT, lat);
+                    Log.d("hash map: ", "=> " + "put lat");
+
+                    locationHash.put(TAG_LNG, lng);
+                    Log.d("hash map: ", "=> " + "put lng");
+
+                    locationHash.put(TAG_TITLE, title);
+                    Log.d("hash map: ", "=> " + "put title");
+
+
+                    // adding locations to locations list
+                    locationList.add(locationHash);
+                    
+                    Log.d("list: ", "=> " + "added");
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            
         }
 
     }
