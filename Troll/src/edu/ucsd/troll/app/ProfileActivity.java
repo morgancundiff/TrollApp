@@ -3,6 +3,8 @@ package edu.ucsd.troll.app;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.os.AsyncTask;
+import android.app.ActionBar;
+import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.text.Html;
@@ -51,6 +53,8 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 
+import edu.ucsd.troll.app.R;
+
 /**
  * Created by shalomabitan on 5/22/14.
  */
@@ -96,22 +100,48 @@ public class ProfileActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        getActionBar().setDisplayHomeAsUpEnabled(true);
 
         //login manager
         login = new LoginManager(getApplicationContext());
         
         if(!login.isLoggedIn()){
+        	
+            setContentView(R.layout.profile_logged_out);
 
+            
+            final Button switchToSignIn = (Button) findViewById(R.id.signInBtn);
+            final Button switchToSignUp = (Button) findViewById(R.id.signUpBtn);
 
-            Intent i = new Intent(getApplicationContext(), LoginActivity.class);
-            startActivity(i);
-            finish();
+            switchToSignIn.setOnClickListener(new View.OnClickListener() {
+                @Override
+
+            public void onClick(View view) {
+                	Intent i = new Intent(getApplicationContext(), LoginActivity.class);
+                    startActivity(i);
+                    finish();
+                }
+            });
+            
+            switchToSignUp.setOnClickListener(new View.OnClickListener() {
+                @Override
+
+            public void onClick(View view) {
+                	Intent i = new Intent(getApplicationContext(), SignUpActivity.class);
+                    startActivity(i);
+                    finish();
+                }
+            });
+            
+         
 
 
         }else{
             setContentView(R.layout.profile_layout);
             //this is just for testing and debugging
             //login.logoutUser();
+         
             
             final Button logoutButton = (Button) findViewById(R.id.logoutBtn);
 
@@ -179,6 +209,17 @@ public class ProfileActivity extends Activity {
 
     }
 
+    
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        // Respond to the action bar's Up/Home button
+        case android.R.id.home:
+            NavUtils.navigateUpFromSameTask(this);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
 
 

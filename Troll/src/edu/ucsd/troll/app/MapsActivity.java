@@ -480,7 +480,7 @@ public class MapsActivity extends FragmentActivity implements
     		locationManager.removeUpdates(this);
 
     	else
-    		Log.d("Maps Activity", "MO: mLocatoinClinet is null at stop");
+    		Log.d("Main Activity", "MO: mLocatoinClinet is null at stop");
         Toast.makeText(this, "Location Update Stopped", Toast.LENGTH_SHORT).show();	
     }
 
@@ -565,4 +565,3 @@ public class MapsActivity extends FragmentActivity implements
 		
 	}
 }
-
