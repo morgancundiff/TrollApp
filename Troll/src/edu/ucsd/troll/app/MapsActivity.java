@@ -1,10 +1,22 @@
 package edu.ucsd.troll.app;
 
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.List;
 import java.util.ArrayList;
+import org.apache.http.NameValuePair;
+import java.util.HashMap;
+import org.apache.http.message.BasicNameValuePair;
+
 import org.w3c.dom.Document;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
@@ -14,11 +26,16 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.NavUtils;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.ListAdapter;
+import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -35,12 +52,64 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.List;
+import java.util.ArrayList;
+
+import org.apache.http.NameValuePair;
+
+import java.util.HashMap;
+
+import org.apache.http.message.BasicNameValuePair;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.List;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
+
+
 public class MapsActivity extends FragmentActivity implements
         GooglePlayServicesClient.ConnectionCallbacks,
         GooglePlayServicesClient.OnConnectionFailedListener,
         com.google.android.gms.location.LocationListener,
         LocationListener {
 
+    private static String locationUrl = "http://troll.everythingcoed.com/get/locations";
+
+    private static final String TAG_APIKEYVALUE = "OlDwjUX0fQSm0vAy2D3fy4uCZ108bx5N";
+    private static final String TAG_APIKEYNAME= "api_key";
+    private static final String TAG_RESPONSE = "response";
+    private static final String TAG_RESULT = "result";
+    private static final String TAG_LOCATIONS = "locations";
+    private static final String TAG_ID = "id";
+    private static final String TAG_LAT = "lat";
+    private static final String TAG_LNG = "lng";
+    private static final String TAG_TITLE = "location_name";
+    private static final String TAG_ADDRESS = "address";
+    private static final String TAG_LASTNAME = "last_name";
+    private static final String TAG_FAVORITES = "favorites";
+    private static final String TAG_USERTOKEN = "presist_code";
+    
+    JSONArray locations = null;
+    // Hashmap for ListView
+    ArrayList<HashMap<String, String>> locationList;
+    
+    //paramete list for api calls
+    List<NameValuePair> params = new ArrayList<NameValuePair>();
+    
 	private GoogleMap map;	
 	int currentMapZoom;
 
@@ -73,7 +142,17 @@ public class MapsActivity extends FragmentActivity implements
 	@Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //providing up navigation
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+        
+        //add the api key for the call
+        params.add(new BasicNameValuePair(TAG_APIKEYNAME, TAG_APIKEYVALUE));
+        
+        locationList = new ArrayList<HashMap<String, String>>();
+        
         setContentView(R.layout.maps_layout);
+        
+        new GetLocations().execute();
 		setUpMapIfNeeded();
 
         // Create a new global location parameters object
@@ -109,6 +188,25 @@ public class MapsActivity extends FragmentActivity implements
         mapDirections = new GMapDirection();
     }
     
+    
+    /**
+     * All screens in your app that are not the main entrance 
+     * to your app (the "home" screen)should offer the user 
+     * a way to navigate to the logical parent screen in the 
+     * app's hierarchy by pressing the Up button in the action bar.  
+     */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        // Respond to the action bar's Up/Home button
+        case android.R.id.home:
+            NavUtils.navigateUpFromSameTask(this);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+    
+    
     @SuppressLint("NewApi")
 	private void setUpMapIfNeeded() {
 	 	// Do a null check to confirm that we have not already instantiated the map.
@@ -129,7 +227,7 @@ public class MapsActivity extends FragmentActivity implements
 	        //QUERY THE DATABASE FOR OPEN OR CLOSED CARTS
 			
 	        currentMapZoom = 15;
-
+	        
 	        //CREATE THE MARKERS WITH THE APPROPRIATE IMAGES
 			LatLng ucsdLatLng = new LatLng(32.881271, -117.2389000);//879271,2289000
 			//LatLng 
@@ -480,7 +578,7 @@ public class MapsActivity extends FragmentActivity implements
     		locationManager.removeUpdates(this);
 
     	else
-    		Log.d("Main Activity", "MO: mLocatoinClinet is null at stop");
+    		Log.d("Maps Activity", "MO: mLocatoinClinet is null at stop");
         Toast.makeText(this, "Location Update Stopped", Toast.LENGTH_SHORT).show();	
     }
 
@@ -564,4 +662,105 @@ public class MapsActivity extends FragmentActivity implements
 		// TODO Auto-generated method stub
 		
 	}
+	
+    /**
+     * Async task class to get json by making HTTP call
+     * */
+    private class GetLocations extends AsyncTask<Void, Void, String> {
+
+        HashMap<String, String> Locations = new HashMap<String, String>();
+
+//        @Override
+//        protected void onPreExecute() {
+//            super.onPreExecute();
+//        }
+
+        @Override
+        protected String doInBackground(Void... arg0) {
+            // Creating service handler class instance
+            APIServiceHandler sh = new APIServiceHandler();
+ 
+            // Making a request to url and getting response
+            String jsonStr = sh.makeServiceCall(locationUrl, APIServiceHandler.GET, params);
+ 
+            
+ 
+            if (jsonStr != null) {
+               return jsonStr;
+            } else {
+                Log.e("ServiceHandler", "Couldn't get any data from the url");
+            }
+ 
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+
+            Log.d("RESULT: ", "=> " + result);
+            
+            try {
+                JSONObject jsonObj = new JSONObject(result);
+                 
+                // Getting JSON Array node
+                locations = jsonObj.getJSONArray(TAG_LOCATIONS);
+
+                // looping through All Contacts
+                for (int i = 0; i < locations.length(); i++) {
+                    JSONObject c = locations.getJSONObject(i);
+                    
+                    Log.d("individual location: ", "=> " + c);
+                     
+                    String id = c.getString(TAG_ID);
+                    Log.d("id: ", "=> " + id);
+                    String lat = c.getString(TAG_LAT);
+                    Log.d("lat: ", "=> " + lat);
+                    String lng = c.getString(TAG_LNG);
+                    Log.d("lng: ", "=> " + lng);
+                    String address = c.getString(TAG_ADDRESS);
+                    Log.d("address: ", "=> " + address);
+                    String title = c.getString(TAG_TITLE);
+                    Log.d("title: ", "=> " + title);
+
+//                    // Phone node is JSON Object
+//                    JSONObject phone = c.getJSONObject(TAG_PHONE);
+//                    String mobile = phone.getString(TAG_PHONE_MOBILE);
+//                    String home = phone.getString(TAG_PHONE_HOME);
+//                    String office = phone.getString(TAG_PHONE_OFFICE);
+
+                    // tmp hashmap for single contact
+                    HashMap<String, String> locationHash = new HashMap<String, String>();
+                    
+                    Log.d("hash map: ", "=> " + "become active");
+
+                    // adding each child node to HashMap key => value
+                    locationHash.put(TAG_ID, id);
+                    Log.d("hash map: ", "=> " + "put id");
+                    
+                    locationHash.put(TAG_LAT, lat);
+                    Log.d("hash map: ", "=> " + "put lat");
+
+                    locationHash.put(TAG_LNG, lng);
+                    Log.d("hash map: ", "=> " + "put lng");
+
+                    locationHash.put(TAG_TITLE, title);
+                    Log.d("hash map: ", "=> " + "put title");
+
+
+                    // adding locations to locations list
+                    locationList.add(locationHash);
+                    
+                    Log.d("list: ", "=> " + "added");
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            
+        }
+
+    }
+
+    
 }
+
