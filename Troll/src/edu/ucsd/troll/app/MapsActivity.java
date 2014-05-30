@@ -7,10 +7,12 @@ import org.json.JSONObject;
 
 import java.util.List;
 import java.util.ArrayList;
-import org.apache.http.NameValuePair;
-import java.util.HashMap;
-import org.apache.http.message.BasicNameValuePair;
 
+import org.apache.http.NameValuePair;
+
+import java.util.HashMap;
+
+import org.apache.http.message.BasicNameValuePair;
 import org.w3c.dom.Document;
 
 import android.annotation.SuppressLint;
@@ -28,12 +30,15 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NavUtils;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
@@ -45,6 +50,7 @@ import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
@@ -85,7 +91,7 @@ public class MapsActivity extends FragmentActivity implements
         GooglePlayServicesClient.ConnectionCallbacks,
         GooglePlayServicesClient.OnConnectionFailedListener,
         com.google.android.gms.location.LocationListener,
-        LocationListener {
+        LocationListener, OnMarkerClickListener{
 
     private static String locationUrl = "http://troll.everythingcoed.com/get/locations";
 
@@ -95,6 +101,7 @@ public class MapsActivity extends FragmentActivity implements
     private static final String TAG_RESULT = "result";
     private static final String TAG_LOCATIONS = "locations";
     private static final String TAG_ID = "id";
+    private static final String TAG_LOCATIONSID = "id";
     private static final String TAG_LAT = "lat";
     private static final String TAG_LNG = "lng";
     private static final String TAG_TITLE = "location_name";
@@ -103,6 +110,10 @@ public class MapsActivity extends FragmentActivity implements
     private static final String TAG_FAVORITES = "favorites";
     private static final String TAG_USERTOKEN = "presist_code";
     
+    
+    LocationAPIManager locationsStorage;
+    
+    
     JSONArray locations = null;
     // Hashmap for ListView
     ArrayList<HashMap<String, String>> locationList;
@@ -110,8 +121,32 @@ public class MapsActivity extends FragmentActivity implements
     //paramete list for api calls
     List<NameValuePair> params = new ArrayList<NameValuePair>();
     
-	private GoogleMap map;	
+    private ProgressDialog pDialog;
+    
+
+	protected GoogleMap map;	
 	int currentMapZoom;
+	private LatLng myLatLng;
+	private LatLng destinationLatLng;
+
+	private boolean mapMarkerClicked = false;
+	Marker selectedMarker;
+
+	LatLng centerLatLng;
+	LatLng socialScienceLatLng;
+	LatLng SOMLatLng;
+	LatLng revellePlazaLatLng;
+	String locationString;
+	int    location_pic;
+	Marker warrenMarker;
+	Marker centerHallMarker;
+	Marker socialScienceMarker;
+	Marker SOMMarker;
+	Marker revellePlazaMarker;
+	final  int CARTS_TOTAL = 5;
+//	LatLngArrayList latarr = new LatLngArrayList();
+	private Button mChangeLocationButton;
+
 
     // A request to connect to Location Services
     private LocationRequest mLocationRequest;
@@ -142,18 +177,51 @@ public class MapsActivity extends FragmentActivity implements
 	@Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.maps_layout);
         //providing up navigation
         getActionBar().setDisplayHomeAsUpEnabled(true);
         
         //add the api key for the call
         params.add(new BasicNameValuePair(TAG_APIKEYNAME, TAG_APIKEYVALUE));
         
+        locationsStorage = new LocationAPIManager(getApplicationContext());
+        
+        String locationAPIResult = locationsStorage.getLocations();
+        
         locationList = new ArrayList<HashMap<String, String>>();
         
-        setContentView(R.layout.maps_layout);
+        setUpLocations(locationAPIResult);
+       
         
-        new GetLocations().execute();
-		setUpMapIfNeeded();
+        Log.d("setUpMapIfNeeded", "activated");
+        setUpMapIfNeeded();
+        Log.d("setUpMapIfNeeded", "passed");
+        
+    
+        
+        //map.setOnMarkerClickListener((OnMarkerClickListener) this); //doesnt work
+        Log.d("setOnMarkerClickListener", "activated");
+        map.setOnMarkerClickListener(this);
+        Log.d("setOnMarkerClickListener", "passed");
+
+        
+		/* ADDED IN THIS REWRITE */
+		//Also, probably need to disable button when invisible
+		mChangeLocationButton = (Button)findViewById(R.id.change_loc_butt);
+		mChangeLocationButton.setVisibility(View.GONE);
+		mChangeLocationButton.setOnClickListener(new View.OnClickListener() {
+			 @Override
+			 public void onClick(View v) {
+				//restartMap();
+				mChangeLocationButton.setVisibility(View.GONE);
+				
+			 }
+			 });
+
+		if (android.os.Build.VERSION.SDK_INT > 9) {
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+            StrictMode.setThreadPolicy(policy);
+        }
 
         // Create a new global location parameters object
         mLocationRequest = LocationRequest.create();
@@ -182,10 +250,83 @@ public class MapsActivity extends FragmentActivity implements
         
         myCriteria = new Criteria();
         myCriteria.setAccuracy(Criteria.ACCURACY_FINE);
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        locationManager.requestLocationUpdates(0L,0.0f, myCriteria, this, null);
+       // locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        //locationManager.requestLocationUpdates(0L,0.0f, myCriteria, this, null);
         
-        mapDirections = new GMapDirection();
+       // mapDirections = new GMapDirection();
+        
+        
+//		locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+//		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 0, new LocationListener() {
+//	                @Override
+//	                public void onLocationChanged(Location location) {
+//	                    // TODO Auto-generated method stub
+//	                	Log.d("onLocationChanged", "Joel - activated");
+//	                	
+//	                    // Report to the UI that the location was updated
+//	                    // Toast.makeText(this, "Location Updated", Toast.LENGTH_SHORT).show();	
+//	                     // In the UI, set the latitude and longitude to the value received
+//	                 	//mCurrentLocation = location;
+//	                 	
+//	                 	/*for directions again*/
+//	                 	myLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+//	                 	
+//	                 	CameraPosition cameraPosition = new CameraPosition.Builder()
+//	                 			.target(myLatLng) // Sets the center of the map to
+//	                 	        .zoom(currentMapZoom)                   // Sets the zoom
+//	                 	        .bearing(0)//(float) myBearing) // Sets the orientation of the camera to east
+//	                 	        .tilt(30)//(float)myAngle)    // Sets the tilt of the camera to 30 degrees
+//	                 	        .build();    // Creates a CameraPosition from the builder
+//	                 	    	map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+//
+//	                 	//locationManager.removeUpdates(this);
+//	                 	    	
+//	                 	/* WE REDRAW THE LINE FOR DIRECTIONS */
+//	                 	if(mapMarkerClicked){
+//	                 		mChangeLocationButton.setVisibility(View.VISIBLE);
+//	                 		map.clear();
+//	                 	    	Document doc = mapDirections.getDocument(myLatLng, destinationLatLng, mapDirections.MODE_WALKING);
+//	                 			int duration = mapDirections.getDurationValue(doc);
+//	                 			String distance = mapDirections.getDistanceText(doc);
+//	                 			String start_address = mapDirections.getStartAddress(doc);
+//	                 			String copy_right = mapDirections.getCopyRights(doc);
+//	                 			ArrayList<LatLng> directionPoint = mapDirections.getDirection(doc);
+//	                 			PolylineOptions rectLine = new PolylineOptions().width(3).color(Color.RED);
+//	                 			for(int i=0, _i=directionPoint.size();i<_i;++i)
+//	                 			{
+//	                 			
+//	                 				rectLine.add(directionPoint.get(i));
+//	                 			}
+//	                 			map.addMarker(new MarkerOptions().position(destinationLatLng)
+//	                 			        .title(selectedMarker.getTitle()));
+//	                 			map.addPolyline(rectLine);
+//	                 	}
+//	                 	
+//	                 	
+//	                }
+//	                @Override
+//	                public void onProviderDisabled(String provider) {
+//	                    // TODO Auto-generated method stub
+//	                	Log.d("onProviderDisabled", "Joel - disabled");
+//
+//	                }
+//	                @Override
+//	                public void onProviderEnabled(String provider) {
+//	                    // TODO Auto-generated method stub
+//	                	Log.d("onProviderEnabled", "Joel - enabled");
+//
+//	                }
+//	                @Override
+//	                public void onStatusChanged(String provider, int status,
+//	                        Bundle extras) {
+//	                    // TODO Auto-generated method stub
+//	                	Log.d("onStatusChanged", "Joel - changed");
+//
+//	                	
+//	                }           
+//	            });
+		
+		
     }
     
     
@@ -205,13 +346,122 @@ public class MapsActivity extends FragmentActivity implements
         }
         return super.onOptionsItemSelected(item);
     }
+
+   	private void setUpLocations(String locationsArray) {
+    	
+    	Log.d("Location String", locationsArray);
+    	
+    	try {
+            JSONObject jsonObj = new JSONObject(locationsArray);
+             
+            // Getting JSON Array node
+            locations = jsonObj.getJSONArray(TAG_LOCATIONS);
+            
+            Log.d("individual location: ", "=> " + locations);
+
+            // looping through All Contacts
+            for (int i = 0; i < locations.length(); i++) {
+                
+            	JSONObject c = locations.getJSONObject(i);
+                
+                Log.d("individual location: ", "=> " + c);
+                 
+                String id = c.getString(TAG_LOCATIONSID);
+                Log.d("id: ", "=> " + id);
+                String lat = c.getString(TAG_LAT);
+                Log.d("lat: ", "=> " + lat);
+                String lng = c.getString(TAG_LNG);
+                Log.d("lng: ", "=> " + lng);
+                String address = c.getString(TAG_ADDRESS);
+                Log.d("address: ", "=> " + address);
+                String title = c.getString(TAG_TITLE);
+                Log.d("title: ", "=> " + title);
+
+//                // Phone node is JSON Object
+//                JSONObject phone = c.getJSONObject(TAG_PHONE);
+//                String mobile = phone.getString(TAG_PHONE_MOBILE);
+//                String home = phone.getString(TAG_PHONE_HOME);
+//                String office = phone.getString(TAG_PHONE_OFFICE);
+
+                // tmp hashmap for single contact
+                HashMap<String, String> locationHash = new HashMap<String, String>();
+                
+                Log.d("hash map: ", "=> " + "become active");
+
+                // adding each child node to HashMap key => value
+                locationHash.put(TAG_LOCATIONSID, id);
+                Log.d("hash map: ", "=> " + "put id");
+                
+                locationHash.put(TAG_LAT, lat);
+                Log.d("hash map: ", "=> " + "put lat");
+
+                locationHash.put(TAG_LNG, lng);
+                Log.d("hash map: ", "=> " + "put lng");
+
+                locationHash.put(TAG_TITLE, title);
+                Log.d("hash map: ", "=> " + "put title");
+
+
+                // adding locations to locations list
+                locationList.add(locationHash);
+                
+                Log.d("list: ", "=> " + "added");
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    	
+    }
     
-    
+   	
+   
+
+   	
+    /* FOR INDIVIDUAL SELECTIONS */
+   	@Override
+   	public boolean onMarkerClick(Marker marker){
+   		
+   		Log.d("onMarkerClick", "activated");
+//   		mChangeLocationButton.setVisibility(View.VISIBLE);
+   		selectedMarker = marker;
+   		setUpMapIfNeeded();
+   		
+   			locationString = marker.getTitle();
+			location_pic = R.drawable.ic_launcher;
+			destinationLatLng = marker.getPosition();
+	
+   		/* CREATING DIALOGUE BOX TO APPEAR ON CLICK OF BUTTON */
+           final Dialog dialog = new Dialog(this);
+   		dialog.setContentView(R.layout.dialogue_menu_navigate);
+   		dialog.setTitle(locationString);
+   		/*	SETTING IMAGE , IN THIS INSTANCE FAIRBANKS NEAR CENTER */
+   		// set the custom dialog components - text, image and button
+   		ImageView image = (ImageView) dialog.findViewById(R.id.image);
+   		image.setImageResource(location_pic);
+   		/*	SETTING BUTTON WITHING DIALOGUE */
+   		Button dialogButton = (Button) dialog.findViewById(R.id.navigateToButton);
+   		// if button is clicked, close the custom dialog
+   		dialogButton.setOnClickListener(new View.OnClickListener() {
+   			@Override
+   			public void onClick(View v) {
+   				dialog.dismiss();
+   				mapMarkerClicked = true;
+   			}
+   		});
+
+   		dialog.show();
+   		Log.d("onMarkerClick", "passed");
+   		return true;
+   	}
+   	
+   	
+   	
     @SuppressLint("NewApi")
 	private void setUpMapIfNeeded() {
 	 	// Do a null check to confirm that we have not already instantiated the map.
 	    if (map == null) {
 	        map = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
+	        mapDirections = new GMapDirection();
 	    }
         // Check if we were successful in obtaining the map.
         if (map != null) {
@@ -220,50 +470,26 @@ public class MapsActivity extends FragmentActivity implements
 	        map.setMyLocationEnabled(true);
 	        
 	        map.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-//	        map.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-//	        map.setMapType(GoogleMap.MAP_TYPE_NONE);
-//	        map.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
-//	        map.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
-	        //QUERY THE DATABASE FOR OPEN OR CLOSED CARTS
 			
 	        currentMapZoom = 15;
-	        
-	        //CREATE THE MARKERS WITH THE APPROPRIATE IMAGES
-			LatLng ucsdLatLng = new LatLng(32.881271, -117.2389000);//879271,2289000
-			//LatLng 
-			warrenLatLng = new LatLng(32.880966, -117.234450);
-			LatLng centerLatLng = new LatLng(32.878053, -117.237218);
-			LatLng socialScienceLatLng = new LatLng(32.883822, -117.240748);
-			LatLng SOMLatLng = new LatLng(32.875852, -117.237578);
-			LatLng revellePlazaLatLng = new LatLng(32.874851, -117.241217);
-			Marker ucsd = map.addMarker(new MarkerOptions().position(ucsdLatLng)
-					.visible(false).title("UCSD"));
-			Marker warrenMarker = map.addMarker(new MarkerOptions().position(warrenLatLng)
-			        .title("Warren").snippet("Welcome to warren coffee cart"));
-			Marker centerHallMarker = map.addMarker(new MarkerOptions().position(centerLatLng)
-			        .title("Center"));
-			Marker socialScienceMarker = map.addMarker(new MarkerOptions().position(socialScienceLatLng)
-			        .title("Social Sceinces"));
-			Marker SOMMarker = map.addMarker(new MarkerOptions().position(SOMLatLng)
-			        .title("SOM"));
-			Marker revellePlazaMarker = map.addMarker(new MarkerOptions().position(revellePlazaLatLng)
-			        .title("Revelle Plaza"));
-			map.moveCamera(CameraUpdateFactory.newLatLngZoom(ucsdLatLng, currentMapZoom));
+	       
+	      Log.d("The Location List Array:", "=>" + locationList);
 
-	        //ADD THE MARKERS TO THE ARRAY LIST
-//			mapLocMarker UCSD = new mapLocMarker("UCSD", new LatLng(32.881271, -117.2389000), ucsd);
-//			mapLocMarkerArray.add(UCSD);
-//			mapLocMarker WARREN = new mapLocMarker("Warren", warrenLatLng, warrenMarker);
-//			mapLocMarkerArray.add(WARREN);
-//			mapLocMarker UCSD = new mapLocMarker("UCSD", ucsdLatLng, ucsd);
-//			mapLocMarkerArray.add(UCSD);
-//			mapLocMarker UCSD = new mapLocMarker("UCSD", ucsdLatLng, ucsd);
-//			mapLocMarkerArray.add(UCSD);
-//			mapLocMarker UCSD = new mapLocMarker("UCSD", ucsdLatLng, ucsd);
-//			mapLocMarkerArray.add(UCSD);
-//			mapLocMarker UCSD = new mapLocMarker("UCSD", ucsdLatLng, ucsd);
-//			mapLocMarkerArray.add(UCSD);
-	        //ADD THE MARKERS TO THE MAP
+	      LatLng ucsdLatLng = new LatLng(32.881271, -117.2389000);//879271,2289000
+		  map.moveCamera(CameraUpdateFactory.newLatLngZoom(ucsdLatLng, currentMapZoom));
+
+
+	      //this prints out the markers on the map
+	      for (HashMap<String, String> hashMap : locationList) {
+	    	  
+	    	  
+	    	  Log.d("The Location List Array:", "=>" + hashMap.get(TAG_ID));
+	    	  
+	          map.addMarker(new MarkerOptions()
+	              .position(new LatLng(Double.parseDouble(hashMap.get(TAG_LAT)) ,        
+	                  Double.parseDouble(hashMap.get(TAG_LNG))))
+	              .title(hashMap.get(TAG_TITLE)));
+	      }
 	    }
 	}
 
@@ -526,34 +752,43 @@ public class MapsActivity extends FragmentActivity implements
     public void onLocationChanged(Location location) {
 
         // Report to the UI that the location was updated
-        Toast.makeText(this, "Location Updated", Toast.LENGTH_SHORT).show();	
+       // Toast.makeText(this, "Location Updated", Toast.LENGTH_SHORT).show();	
         // In the UI, set the latitude and longitude to the value received
-    	mCurrentLocation = location;
-		Document doc = mapDirections.getDocument(new LatLng(location.getLatitude(), location.getLongitude())
-		, warrenLatLng, GMapDirection.MODE_WALKING);
-//		int duration = mapDirections.getDurationValue(doc);
-//		String distance = mapDirections.getDistanceText(doc);
-//		String start_address = mapDirections.getStartAddress(doc);
-//		String copy_right = mapDirections.getCopyRights(doc);
-//		ArrayList<LatLng> directionPoint = mapDirections.getDirection(doc);
-//		PolylineOptions rectLine = new PolylineOptions().width(3).color(Color.RED);
-//		for(int i=0, _i=directionPoint.size();i<_i;++i)
-//		{
-//			rectLine.add(directionPoint.get(i));
-//		}
-//		map.clear();
-//		map.addMarker(new MarkerOptions().position(warrenLatLng)
-//		        .title("Warren"));
-//		map.addPolyline(rectLine);
+    	//mCurrentLocation = location;
+    	
+    	/*for directions again*/
+    	myLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+    	
     	CameraPosition cameraPosition = new CameraPosition.Builder()
-    			.target(new LatLng(location.getLatitude(), location.getLongitude())) // Sets the center of the map to
+    			.target(myLatLng) // Sets the center of the map to
     	        .zoom(currentMapZoom)                   // Sets the zoom
     	        .bearing(0)//(float) myBearing) // Sets the orientation of the camera to east
     	        .tilt(30)//(float)myAngle)    // Sets the tilt of the camera to 30 degrees
     	        .build();    // Creates a CameraPosition from the builder
     	    	map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
-//    	locationManager.removeUpdates(this);
+    	//locationManager.removeUpdates(this);
+    	    	
+    	/* WE REDRAW THE LINE FOR DIRECTIONS */
+    	if(mapMarkerClicked){
+    		mChangeLocationButton.setVisibility(View.VISIBLE);
+    		map.clear();
+    	    	Document doc = mapDirections.getDocument(myLatLng, destinationLatLng, mapDirections.MODE_WALKING);
+    			int duration = mapDirections.getDurationValue(doc);
+    			String distance = mapDirections.getDistanceText(doc);
+    			String start_address = mapDirections.getStartAddress(doc);
+    			String copy_right = mapDirections.getCopyRights(doc);
+    			ArrayList<LatLng> directionPoint = mapDirections.getDirection(doc);
+    			PolylineOptions rectLine = new PolylineOptions().width(3).color(Color.RED);
+    			for(int i=0, _i=directionPoint.size();i<_i;++i)
+    			{
+    			
+    				rectLine.add(directionPoint.get(i));
+    			}
+    			map.addMarker(new MarkerOptions().position(destinationLatLng)
+    			        .title(selectedMarker.getTitle()));
+    			map.addPolyline(rectLine);
+    	}
     }
 
     /**
@@ -562,9 +797,79 @@ public class MapsActivity extends FragmentActivity implements
      */
     private void startPeriodicUpdates() {
 
-        mLocationClient.requestLocationUpdates(mLocationRequest, this);
-        locationManager.requestLocationUpdates(0L,0.0f, myCriteria, this, null);
-        Toast.makeText(this, "Location Updated Requested", Toast.LENGTH_SHORT).show();	
+//        mLocationClient.requestLocationUpdates(mLocationRequest, this);
+//        locationManager.requestLocationUpdates(0L,0.0f, myCriteria, this, null);
+//        Toast.makeText(this, "Location Updated Requested", Toast.LENGTH_SHORT).show();
+    	
+		locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+		locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 10000, 0, new LocationListener() {
+	                @Override
+	                public void onLocationChanged(Location location) {
+	                    // TODO Auto-generated method stub
+	                	Log.d("onLocationChanged", "Joel - activated");
+	                	
+	                    // Report to the UI that the location was updated
+	                    // Toast.makeText(this, "Location Updated", Toast.LENGTH_SHORT).show();	
+	                     // In the UI, set the latitude and longitude to the value received
+	                 	//mCurrentLocation = location;
+	                 	
+	                 	/*for directions again*/
+	                 	myLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+	                 	
+	                 	CameraPosition cameraPosition = new CameraPosition.Builder()
+	                 			.target(myLatLng) // Sets the center of the map to
+	                 	        .zoom(currentMapZoom)                   // Sets the zoom
+	                 	        .bearing(0)//(float) myBearing) // Sets the orientation of the camera to east
+	                 	        .tilt(30)//(float)myAngle)    // Sets the tilt of the camera to 30 degrees
+	                 	        .build();    // Creates a CameraPosition from the builder
+	                 	    	map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+
+	                 	//locationManager.removeUpdates(this);
+	                 	    	
+	                 	/* WE REDRAW THE LINE FOR DIRECTIONS */
+	                 	if(mapMarkerClicked){
+	                 		mChangeLocationButton.setVisibility(View.VISIBLE);
+	                 		map.clear();
+	                 	    	Document doc = mapDirections.getDocument(myLatLng, destinationLatLng, mapDirections.MODE_WALKING);
+	                 			int duration = mapDirections.getDurationValue(doc);
+	                 			String distance = mapDirections.getDistanceText(doc);
+	                 			String start_address = mapDirections.getStartAddress(doc);
+	                 			String copy_right = mapDirections.getCopyRights(doc);
+	                 			ArrayList<LatLng> directionPoint = mapDirections.getDirection(doc);
+	                 			PolylineOptions rectLine = new PolylineOptions().width(3).color(Color.RED);
+	                 			for(int i=0, _i=directionPoint.size();i<_i;++i)
+	                 			{
+	                 			
+	                 				rectLine.add(directionPoint.get(i));
+	                 			}
+	                 			map.addMarker(new MarkerOptions().position(destinationLatLng)
+	                 			        .title(selectedMarker.getTitle()));
+	                 			map.addPolyline(rectLine);
+	                 	}
+	                 	
+	                 	
+	                }
+	                @Override
+	                public void onProviderDisabled(String provider) {
+	                    // TODO Auto-generated method stub
+	                	Log.d("onProviderDisabled", "Joel - disabled");
+
+	                }
+	                @Override
+	                public void onProviderEnabled(String provider) {
+	                    // TODO Auto-generated method stub
+	                	Log.d("onProviderEnabled", "Joel - enabled");
+
+	                }
+	                @Override
+	                public void onStatusChanged(String provider, int status,
+	                        Bundle extras) {
+	                    // TODO Auto-generated method stub
+	                	Log.d("onStatusChanged", "Joel - changed");
+
+	                	
+	                }           
+	            });
     }
 
     /**
@@ -662,105 +967,6 @@ public class MapsActivity extends FragmentActivity implements
 		// TODO Auto-generated method stub
 		
 	}
-	
-    /**
-     * Async task class to get json by making HTTP call
-     * */
-    private class GetLocations extends AsyncTask<Void, Void, String> {
-
-        HashMap<String, String> Locations = new HashMap<String, String>();
-
-//        @Override
-//        protected void onPreExecute() {
-//            super.onPreExecute();
-//        }
-
-        @Override
-        protected String doInBackground(Void... arg0) {
-            // Creating service handler class instance
-            APIServiceHandler sh = new APIServiceHandler();
- 
-            // Making a request to url and getting response
-            String jsonStr = sh.makeServiceCall(locationUrl, APIServiceHandler.GET, params);
- 
-            
- 
-            if (jsonStr != null) {
-               return jsonStr;
-            } else {
-                Log.e("ServiceHandler", "Couldn't get any data from the url");
-            }
- 
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            super.onPostExecute(result);
-
-            Log.d("RESULT: ", "=> " + result);
-            
-            try {
-                JSONObject jsonObj = new JSONObject(result);
-                 
-                // Getting JSON Array node
-                locations = jsonObj.getJSONArray(TAG_LOCATIONS);
-
-                // looping through All Contacts
-                for (int i = 0; i < locations.length(); i++) {
-                    JSONObject c = locations.getJSONObject(i);
-                    
-                    Log.d("individual location: ", "=> " + c);
-                     
-                    String id = c.getString(TAG_ID);
-                    Log.d("id: ", "=> " + id);
-                    String lat = c.getString(TAG_LAT);
-                    Log.d("lat: ", "=> " + lat);
-                    String lng = c.getString(TAG_LNG);
-                    Log.d("lng: ", "=> " + lng);
-                    String address = c.getString(TAG_ADDRESS);
-                    Log.d("address: ", "=> " + address);
-                    String title = c.getString(TAG_TITLE);
-                    Log.d("title: ", "=> " + title);
-
-//                    // Phone node is JSON Object
-//                    JSONObject phone = c.getJSONObject(TAG_PHONE);
-//                    String mobile = phone.getString(TAG_PHONE_MOBILE);
-//                    String home = phone.getString(TAG_PHONE_HOME);
-//                    String office = phone.getString(TAG_PHONE_OFFICE);
-
-                    // tmp hashmap for single contact
-                    HashMap<String, String> locationHash = new HashMap<String, String>();
-                    
-                    Log.d("hash map: ", "=> " + "become active");
-
-                    // adding each child node to HashMap key => value
-                    locationHash.put(TAG_ID, id);
-                    Log.d("hash map: ", "=> " + "put id");
-                    
-                    locationHash.put(TAG_LAT, lat);
-                    Log.d("hash map: ", "=> " + "put lat");
-
-                    locationHash.put(TAG_LNG, lng);
-                    Log.d("hash map: ", "=> " + "put lng");
-
-                    locationHash.put(TAG_TITLE, title);
-                    Log.d("hash map: ", "=> " + "put title");
-
-
-                    // adding locations to locations list
-                    locationList.add(locationHash);
-                    
-                    Log.d("list: ", "=> " + "added");
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            
-        }
-
-    }
-
     
 }
 

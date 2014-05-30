@@ -50,13 +50,14 @@ public class SingleMenuItemActivity extends Activity{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.menu_single_item);
 		
+		//setting the title name
 		TextView itemTitle = (TextView)findViewById(R.id.lblTitle);  
 		itemTitle.setText(getIntent().getStringExtra(TAG_TITLE));
-		
-		TextView itemDescription = (TextView)findViewById(R.id.lblTitle);  
+		//setting the 
+		TextView itemDescription = (TextView)findViewById(R.id.lblDescription);  
 		itemDescription.setText(getIntent().getStringExtra(TAG_DESCRIPTION));
 		
-		TextView itemCategory = (TextView)findViewById(R.id.lblTitle);  
+		TextView itemCategory = (TextView)findViewById(R.id.lblTotalVotes);  
 		itemCategory.setText(getIntent().getStringExtra(TAG_CATEGORY));
 		
 		

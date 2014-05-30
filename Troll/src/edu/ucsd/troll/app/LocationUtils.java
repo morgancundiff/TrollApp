@@ -29,11 +29,11 @@ public final class LocationUtils {
 
     // Name of shared preferences repository that stores persistent state
     public static final String SHARED_PREFERENCES =
-            "com.troll.trollmaps.SHARED_PREFERENCES";
+            "edu.ucsd.troll.app.SHARED_PREFERENCES";
 
     // Key for storing the "updates requested" flag in shared preferences
     public static final String KEY_UPDATES_REQUESTED =
-            "com.troll.trollmaps.KEY_UPDATES_REQUESTED";
+            "edu.ucsd.troll.app.KEY_UPDATES_REQUESTED";
 
     /*
      * Define a request code to send to Google Play services
