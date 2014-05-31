@@ -53,18 +53,4 @@
         android:singleLine="true"
         android:layout_marginBottom="10dip"/>
 
-    <TextView
-        android:id="@+id/favorites_title"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="true"
-        android:text="Your Favorites:" />
-
-
-    <ListView
-        android:id="@+id/favorite_list"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent">
-    </ListView>
 </LinearLayout>
