@@ -229,5 +229,7 @@ public class ProfileActivity extends Activity {
         }
         return super.onOptionsItemSelected(item);
     }
+    
+//class getFavorites() moved to FavoritesActivity.java
 
 }
