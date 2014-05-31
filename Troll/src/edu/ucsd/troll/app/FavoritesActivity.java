@@ -58,7 +58,7 @@ import edu.ucsd.troll.app.R;
 /**
 * Created on 5/30/2014.
 */
-public class ProfileActivity extends Activity {
+public class FavoritesActivity extends Activity {
 
     //init the progress bar
     private ProgressDialog pDialog;
