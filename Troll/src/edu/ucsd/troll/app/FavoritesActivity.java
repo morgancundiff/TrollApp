@@ -94,7 +94,7 @@ public class ProfileActivity extends Activity {
     final Button backButton = (Button) findViewById(R.id.backProfBtn);
     
     backButton.setOnClickListener(new View.onClickListener){
-      @override
+      @Override
       
       public void onClick(View view){
         Intent i = new Intent(getApplicationContext(), ProfileActivity.class);
