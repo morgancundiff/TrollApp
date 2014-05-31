@@ -52,5 +52,13 @@
         android:layout_height="wrap_content"
         android:singleLine="true"
         android:layout_marginBottom="10dip"/>
+        
+    <Button
+        android:id="@+id/favBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp"
+        android_layout_marginLeft="10dp"
+        android:text="Favorites"/>
 
 </LinearLayout>
