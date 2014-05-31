@@ -133,9 +133,6 @@ public class ProfileActivity extends Activity {
                     finish();
                 }
             });
-            
-         
-
 
         }else{
             setContentView(R.layout.profile_layout);
@@ -144,6 +141,7 @@ public class ProfileActivity extends Activity {
          
             
             final Button logoutButton = (Button) findViewById(R.id.logoutBtn);
+            final Button favorites = (Button) findViewById(R.id.favBtn);
 
             logoutButton.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -153,6 +151,17 @@ public class ProfileActivity extends Activity {
                     Intent act2 = new Intent(view.getContext(), MainActivity.class);
                     Toast.makeText(ProfileActivity.this, "You Have Been Logged out", Toast.LENGTH_LONG).show();
                     startActivity(act2);
+                }
+            });
+            
+                        
+            favorites.setOnClickListener(new View.OnClickListener() {
+                @Override
+                
+            public void onClick(View view) {
+                    Intent i = new Intent(getApplicationContext(), FavoritesActivity.class);
+                    startActivity(i);
+                    finish();
                 }
             });
 
